@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vibe Survivor</title>
-
+<title>Vibe Survivor – Progression</title>
 <style>
 html, body {
   margin: 0;
@@ -19,17 +18,16 @@ html, body {
   top: 15px;
   left: 15px;
   font-size: 16px;
-  line-height: 1.4;
 }
 
 #shop {
   position: fixed;
-  top: 15px;
   right: 15px;
-  width: 230px;
-  padding: 12px;
+  top: 15px;
   background: rgba(0,0,0,0.6);
+  padding: 12px;
   border-radius: 10px;
+  width: 230px;
 }
 
 .shop-item {
@@ -57,12 +55,9 @@ button {
   cursor: pointer;
 }
 
-canvas {
-  display: block;
-}
+canvas { display: block; }
 </style>
 </head>
-
 <body>
 
 <div id="hud">
@@ -73,122 +68,71 @@ canvas {
 
 <div id="shop">
   <b>Upgrades</b><br><br>
-
   <div class="shop-item" onclick="buy('size')">
     🟢 Bigger Orbs<br>
-    Level: <span id="sizeLv">0</span>
-    (Cost: <span id="sizeCost">10</span>)
+    Level: <span id="sizeLv">0</span> (Cost: <span id="sizeCost">10</span>)
   </div>
-
   <div class="shop-item" onclick="buy('life')">
     🔵 Longer Life<br>
-    Level: <span id="lifeLv">0</span>
-    (Cost: <span id="lifeCost">10</span>)
+    Level: <span id="lifeLv">0</span> (Cost: <span id="lifeCost">10</span>)
   </div>
-
   <div class="shop-item" onclick="buy('combo')">
     🟣 Combo Boost<br>
-    Level: <span id="comboLv">0</span>
-    (Cost: <span id="comboCost">15</span>)
+    Level: <span id="comboLv">0</span> (Cost: <span id="comboCost">15</span>)
   </div>
-
   <div class="shop-item" onclick="buy('forgive')">
     🟡 Miss Buffer<br>
-    Level: <span id="forgiveLv">0</span>
-    (Cost: <span id="forgiveCost">20</span>)
+    Level: <span id="forgiveLv">0</span> (Cost: <span id="forgiveCost">20</span>)
   </div>
 </div>
 
 <div id="gameover">
-  <div id="finalScore"></div>
+  <div id="final"></div>
   <button onclick="restart()">Next Run</button>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-/* =========================
-   INITIAL SETUP
-========================= */
-
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const scoreEl = document.getElementById("score");
-const missesEl = document.getElementById("misses");
-const missCapEl = document.getElementById("missCap");
-const vibesEl = document.getElementById("vibes");
-const gameoverEl = document.getElementById("gameover");
-const finalScoreEl = document.getElementById("finalScore");
-
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 }
-window.addEventListener("resize", resize);
+addEventListener("resize", resize);
 resize();
 
-/* =========================
-   GAME STATE
-========================= */
-
+// ---- GAME STATE ----
 let score = 0;
 let misses = 0;
 let vibes = 0;
-let combo = 0;
-let running = true;
 let spawnRate = 1200;
+let running = true;
 let orbs = [];
+let combo = 0;
 
-/* =========================
-   UPGRADES
-========================= */
-
+// ---- UPGRADES ----
 const upgrades = {
-  size:    { lv: 0, base: 10 },
-  life:    { lv: 0, base: 10 },
-  combo:   { lv: 0, base: 15 },
+  size: { lv: 0, base: 10 },
+  life: { lv: 0, base: 10 },
+  combo: { lv: 0, base: 15 },
   forgive: { lv: 0, base: 20 }
 };
 
-function upgradeCost(key) {
-  return upgrades[key].base * (upgrades[key].lv + 1);
+function cost(u) {
+  return upgrades[u].base * (upgrades[u].lv + 1);
 }
 
-function buy(key) {
-  const cost = upgradeCost(key);
-  if (vibes >= cost) {
-    vibes -= cost;
-    upgrades[key].lv++;
+function buy(u) {
+  const c = cost(u);
+  if (vibes >= c) {
+    vibes -= c;
+    upgrades[u].lv++;
     updateUI();
   }
 }
-
-/* =========================
-   AUDIO
-========================= */
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function playTone(freq) {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  osc.frequency.value = freq;
-  gain.gain.value = 0.001;
-  gain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.3);
-}
-
-/* =========================
-   UI
-========================= */
 
 function updateUI() {
   scoreEl.textContent = score;
@@ -196,38 +140,52 @@ function updateUI() {
   vibesEl.textContent = vibes;
   missCapEl.textContent = 5 + upgrades.forgive.lv;
 
-  for (const k in upgrades) {
-    document.getElementById(k + "Lv").textContent = upgrades[k].lv;
-    document.getElementById(k + "Cost").textContent = upgradeCost(k);
+  for (let u in upgrades) {
+    document.getElementById(u + "Lv").textContent = upgrades[u].lv;
+    document.getElementById(u + "Cost").textContent = cost(u);
   }
 }
 
-/* =========================
-   SPAWNING
-========================= */
+const scoreEl = document.getElementById("score");
+const missesEl = document.getElementById("misses");
+const missCapEl = document.getElementById("missCap");
+const vibesEl = document.getElementById("vibes");
 
+// ---- AUDIO ----
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function tone(freq) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.frequency.value = freq;
+  g.gain.value = 0.001;
+  g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + 0.25);
+}
+
+// ---- SPAWN ----
 function spawnOrb() {
   if (!running) return;
 
-  const radius = 26 + upgrades.size.lv * 4;
-  const life = 900 + upgrades.life.lv * 150;
+  const baseLife = 900 + upgrades.life.lv * 150;
 
   orbs.push({
-    x: radius + Math.random() * (canvas.width - radius * 2),
-    y: radius + Math.random() * (canvas.height - radius * 2),
-    r: radius,
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: 26 + upgrades.size.lv * 4,
     born: performance.now(),
-    life
+    life: baseLife
   });
 
   spawnRate = Math.max(350, spawnRate - 6);
   setTimeout(spawnOrb, spawnRate);
 }
+spawnOrb();
 
-/* =========================
-   INPUT
-========================= */
-
+// ---- INPUT ----
 canvas.addEventListener("pointerdown", e => {
   if (audioCtx.state === "suspended") audioCtx.resume();
 
@@ -236,42 +194,38 @@ canvas.addEventListener("pointerdown", e => {
 
   for (let i = orbs.length - 1; i >= 0; i--) {
     const o = orbs[i];
-    if (Math.hypot(o.x - x, o.y - y) <= o.r) {
+    if (Math.hypot(o.x - x, o.y - y) < o.r) {
       orbs.splice(i, 1);
       combo++;
       const gain = 1 + combo * 0.1 * upgrades.combo.lv;
       score += Math.floor(gain);
       vibes++;
-      playTone(280 + combo * 18);
+      tone(300 + combo * 15);
       updateUI();
       return;
     }
   }
 });
 
-/* =========================
-   MAIN LOOP
-========================= */
-
-function loop(time) {
+// ---- LOOP ----
+function loop(t) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (let i = orbs.length - 1; i >= 0; i--) {
-    const o = orbs[i];
-    const age = time - o.born;
+  orbs.forEach((o, i) => {
+    const age = t - o.born;
     const pct = age / o.life;
 
     if (pct >= 1) {
       orbs.splice(i, 1);
       misses++;
       combo = 0;
-      playTone(90);
+      tone(100);
       updateUI();
       if (misses >= 5 + upgrades.forgive.lv) endGame();
-      continue;
+      return;
     }
 
-    ctx.fillStyle = `hsl(${score * 6 % 360}, 80%, 60%)`;
+    ctx.fillStyle = `hsl(${score * 6 % 360},80%,60%)`;
     ctx.beginPath();
     ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
     ctx.fill();
@@ -279,26 +233,23 @@ function loop(time) {
     ctx.strokeStyle = "white";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(
-      o.x,
-      o.y,
-      o.r + 6,
-      -Math.PI / 2,
-      -Math.PI / 2 + Math.PI * 2 * (1 - pct)
-    );
+    ctx.arc(o.x, o.y, o.r + 6,
+      -Math.PI/2,
+      -Math.PI/2 + Math.PI * 2 * (1 - pct));
     ctx.stroke();
-  }
+  });
 
   if (running) requestAnimationFrame(loop);
 }
+requestAnimationFrame(loop);
 
-/* =========================
-   GAME FLOW
-========================= */
+// ---- GAME OVER ----
+const gameoverEl = document.getElementById("gameover");
+const finalEl = document.getElementById("final");
 
 function endGame() {
   running = false;
-  finalScoreEl.textContent = `Run Score: ${score}`;
+  finalEl.textContent = `Run Score: ${score}`;
   gameoverEl.style.display = "flex";
 }
 
@@ -315,13 +266,7 @@ function restart() {
   requestAnimationFrame(loop);
 }
 
-/* =========================
-   START
-========================= */
-
 updateUI();
-spawnOrb();
-requestAnimationFrame(loop);
 </script>
 
 </body>
